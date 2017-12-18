@@ -32,6 +32,11 @@ import org.revapi.java.spi.JavaTypeElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Filters elements that are not part of a given Mule module API, so the API modification checks are not executed on them.
+ * <p/>
+ * This filter considers both standard and privileged APIs by merging them into a single API.
+ */
 public final class ExportPackageFilter implements ElementFilter {
 
   private static final String EXPORTED_CLASS_PACKAGES_PROPERTY = "artifact.export.classPackages";
