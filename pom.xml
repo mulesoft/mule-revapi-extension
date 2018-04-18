@@ -131,9 +131,7 @@
         <skipVerifications>false</skipVerifications>
         <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
         <maven.enforcer.plugin.version>1.4.1</maven.enforcer.plugin.version>
-        <license.path>LICENSE_HEADER.txt</license.path>
         <javaFormatter.plugin.version>1.9.0</javaFormatter.plugin.version>
-        <formatterConfigPath>formatter.xml</formatterConfigPath>
     </properties>
 
     <dependencies>
