@@ -13,8 +13,8 @@ import static java.lang.String.format;
  * Provides utilities to create error messages lines that can be used to match against the real log generated during the Maven
  * Revapi plugin.
  * <p/>
- * NOTE: errors messages have different values that can be parameterized, but this utilities parametrize only the values that
- * need to be variable according to the current test suite.
+ * NOTE: errors messages have different values that can be parameterized, but this utilities parametrize only the values that need
+ * to be variable according to the current test suite.
  */
 public class ApiErrorLogUtils {
 
