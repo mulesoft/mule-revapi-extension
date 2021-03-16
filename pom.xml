@@ -80,7 +80,7 @@
         <revapi-java.version>0.14.4</revapi-java.version>
         <revapi-java-spi.version>0.14.0</revapi-java-spi.version>
         <takari.test.version>3.0.0</takari.test.version>
-        <junit.version>4.13.1</junit.version>
+        <junit.version>4.13.2</junit.version>
         <hamcrest-core.version>2.2</hamcrest-core.version>
         <jdk.version>1.8</jdk.version>
         <license.path>LICENSE_HEADER.txt</license.path>
