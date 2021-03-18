@@ -89,7 +89,7 @@
         <skipVerifications>false</skipVerifications>
         <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
         <license.maven.plugin.version>2.11</license.maven.plugin.version>
-        <takari.lifecycle.plugin.version>1.13.10</takari.lifecycle.plugin.version>
+        <takari.lifecycle.plugin.version>2.0.0</takari.lifecycle.plugin.version>
         <maven.enforcer.plugin.version>1.4.1</maven.enforcer.plugin.version>
         <javaFormatter.plugin.version>2.14.0</javaFormatter.plugin.version>
         <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
