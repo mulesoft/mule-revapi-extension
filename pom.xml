@@ -95,7 +95,7 @@
 
         <takari.lifecycle.plugin.version>1.13.10</takari.lifecycle.plugin.version>
         <maven.enforcer.plugin.version>1.4.1</maven.enforcer.plugin.version>
-        <javaFormatter.plugin.version>2.14.0</javaFormatter.plugin.version>
+        <javaFormatter.plugin.version>2.23.0</javaFormatter.plugin.version>
         <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
         <maven.jar.plugin.version>3.2.0</maven.jar.plugin.version>
         <maven.clean.plugin.version>3.1.0</maven.clean.plugin.version>
