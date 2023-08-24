@@ -70,7 +70,7 @@
     </developers>
 
     <properties>
-        <apiAnnotationsVersion>1.5.0-SNAPSHOT</apiAnnotationsVersion>
+        <apiAnnotationsVersion>1.5.0-20230417</apiAnnotationsVersion>
 
         <javaVersion>1.8</javaVersion>
         <revapi.skip>false</revapi.skip>
@@ -79,7 +79,7 @@
         <revapi-basic-features.version>0.13.0</revapi-basic-features.version>
         <revapi-java.version>0.28.1</revapi-java.version>
         <revapi-java-spi.version>0.25.0</revapi-java-spi.version>
-        <takari.test.version>3.0.0</takari.test.version>
+        <takari.test.version>3.0.1</takari.test.version>
         <junit.version>4.13.2</junit.version>
         <hamcrest-core.version>2.2</hamcrest-core.version>
         <jdk.version>1.8</jdk.version>
@@ -94,7 +94,7 @@
         <licenseYear>2023</licenseYear>
 
         <takari.lifecycle.plugin.version>1.13.10</takari.lifecycle.plugin.version>
-        <maven.enforcer.plugin.version>1.4.1</maven.enforcer.plugin.version>
+        <maven.enforcer.plugin.version>1.4.2.jenkins-1</maven.enforcer.plugin.version>
         <javaFormatter.plugin.version>2.14.0</javaFormatter.plugin.version>
         <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
         <maven.jar.plugin.version>3.2.0</maven.jar.plugin.version>
