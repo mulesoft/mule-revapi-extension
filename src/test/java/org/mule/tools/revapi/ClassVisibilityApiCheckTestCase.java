@@ -1,10 +1,9 @@
 /*
- * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
+ * Copyright 2023 Salesforce, Inc. All rights reserved.
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.tools.revapi;
 
 import static org.mule.tools.revapi.ApiErrorLogUtils.ORG_FOO_A;
@@ -14,8 +13,10 @@ import static org.mule.tools.revapi.ApiErrorLogUtils.PRIVATE;
 import static org.mule.tools.revapi.ApiErrorLogUtils.PROTECTED;
 import static org.mule.tools.revapi.ApiErrorLogUtils.PUBLIC;
 import static org.mule.tools.revapi.ApiErrorLogUtils.getClassVisibilityReducedError;
+import static org.mule.tools.revapi.ApiErrorLogUtils.getRemovedClassErrorLog;
 
 import io.takari.maven.testing.executor.MavenRuntime;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class ClassVisibilityApiCheckTestCase extends AbstractApiCheckTestCase {
@@ -25,7 +26,11 @@ public class ClassVisibilityApiCheckTestCase extends AbstractApiCheckTestCase {
   }
 
   @Test
+  @Ignore("Revapi incorrectly reports this case as if the class was removed instead of its visibility reduced. " +
+      "The following issue has been reported in the revapi project: https://github.com/revapi/revapi/issues/288")
   public void detectsPublicToPackageExportedClass() throws Exception {
+    // Note: this kind of change was detected as a visibility reduction, but is now considered by revapi to be a removal of the
+    // class
     String[] classVisibilityReducedError = getClassVisibilityReducedError(ORG_FOO_A, PUBLIC, PACKAGE);
     doBrokenApiTest("detectsPublicToPackageExportedClass", classVisibilityReducedError);
   }

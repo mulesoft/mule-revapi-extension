@@ -1,16 +1,16 @@
 /*
- * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
+ * Copyright 2023 Salesforce, Inc. All rights reserved.
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.tools.revapi;
 
 import static org.mule.tools.revapi.ApiErrorLogUtils.PACKAGE;
 import static org.mule.tools.revapi.ApiErrorLogUtils.PRIVATE;
 import static org.mule.tools.revapi.ApiErrorLogUtils.PROTECTED;
 import static org.mule.tools.revapi.ApiErrorLogUtils.PUBLIC;
+import static org.mule.tools.revapi.ApiErrorLogUtils.getMethodVisibilityIncreasedError;
 import static org.mule.tools.revapi.ApiErrorLogUtils.getMethodVisibilityReducedError;
 
 import io.takari.maven.testing.executor.MavenRuntime;
@@ -23,28 +23,33 @@ public class MethodVisibilityApiCheckTestCase extends AbstractApiCheckTestCase {
   }
 
   @Test
-  public void ignoresProtectedToPublicMethodOnExportedPublicClass() throws Exception {
-    doUnmodifiedApiTest("ignoresProtectedToPublicMethodOnExportedPublicClass");
+  public void detectsProtectedToPublicMethodOnExportedPublicClass() throws Exception {
+    String[] methodVisibilityIncreasedError = getMethodVisibilityIncreasedError(PROTECTED, PUBLIC);
+    doBrokenApiTest("detectsProtectedToPublicMethodOnExportedPublicClass", methodVisibilityIncreasedError);
   }
 
   @Test
-  public void ignoresPackageToPublicMethodOnExportedPublicClass() throws Exception {
-    doUnmodifiedApiTest("ignoresPackageToPublicMethodOnExportedPublicClass");
+  public void detectsPackageToPublicMethodOnExportedPublicClass() throws Exception {
+    String[] methodVisibilityIncreasedError = getMethodVisibilityIncreasedError(PACKAGE, PUBLIC);
+    doBrokenApiTest("detectsPackageToPublicMethodOnExportedPublicClass", methodVisibilityIncreasedError);
   }
 
   @Test
-  public void ignoresPackageToProtectedMethodOnExportedPublicClass() throws Exception {
-    doUnmodifiedApiTest("ignoresPackageToProtectedMethodOnExportedPublicClass");
+  public void detectsPackageToProtectedMethodOnExportedPublicClass() throws Exception {
+    String[] methodVisibilityIncreasedError = getMethodVisibilityIncreasedError(PACKAGE, PROTECTED);
+    doBrokenApiTest("detectsPackageToProtectedMethodOnExportedPublicClass", methodVisibilityIncreasedError);
   }
 
   @Test
-  public void ignoresPrivateToPublicMethodOnExportedPublicClass() throws Exception {
-    doUnmodifiedApiTest("ignoresPrivateToPublicMethodOnExportedPublicClass");
+  public void detectsPrivateToPublicMethodOnExportedPublicClass() throws Exception {
+    String[] methodVisibilityIncreasedError = getMethodVisibilityIncreasedError(PRIVATE, PUBLIC);
+    doBrokenApiTest("detectsPrivateToPublicMethodOnExportedPublicClass", methodVisibilityIncreasedError);
   }
 
   @Test
-  public void ignoresPrivateToProtectedMethodOnExportedPublicClass() throws Exception {
-    doUnmodifiedApiTest("ignoresPrivateToProtectedMethodOnExportedPublicClass");
+  public void detectsPrivateToProtectedMethodOnExportedPublicClass() throws Exception {
+    String[] methodVisibilityIncreasedError = getMethodVisibilityIncreasedError(PRIVATE, PROTECTED);
+    doBrokenApiTest("detectsPrivateToProtectedMethodOnExportedPublicClass", methodVisibilityIncreasedError);
   }
 
   @Test
@@ -66,7 +71,6 @@ public class MethodVisibilityApiCheckTestCase extends AbstractApiCheckTestCase {
   @Test
   public void detectsPublicToPackageMethodOnExportedPublicClass() throws Exception {
     String[] methodVisibilityReducedError = getMethodVisibilityReducedError(PUBLIC, PACKAGE);
-
     doBrokenApiTest("detectsPublicToPackageMethodOnExportedPublicClass", methodVisibilityReducedError);
   }
 

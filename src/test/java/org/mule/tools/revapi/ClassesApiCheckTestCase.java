@@ -1,10 +1,9 @@
 /*
- * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
+ * Copyright 2023 Salesforce, Inc. All rights reserved.
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.tools.revapi;
 
 import static org.mule.tools.revapi.ApiErrorLogUtils.EMPTY_PARAMS;
@@ -12,9 +11,12 @@ import static org.mule.tools.revapi.ApiErrorLogUtils.ORG_BAR_B;
 import static org.mule.tools.revapi.ApiErrorLogUtils.ORG_FOO_A;
 import static org.mule.tools.revapi.ApiErrorLogUtils.ORG_FOO_A_C;
 import static org.mule.tools.revapi.ApiErrorLogUtils.ORG_FOO_B;
+import static org.mule.tools.revapi.ApiErrorLogUtils.PROTECTED;
+import static org.mule.tools.revapi.ApiErrorLogUtils.PUBLIC;
 import static org.mule.tools.revapi.ApiErrorLogUtils.STRING;
 import static org.mule.tools.revapi.ApiErrorLogUtils.getAddedClassErrorLog;
 import static org.mule.tools.revapi.ApiErrorLogUtils.getConstructorNumberOfParametersChangedError;
+import static org.mule.tools.revapi.ApiErrorLogUtils.getConstructorVisibilityIncreasedError;
 import static org.mule.tools.revapi.ApiErrorLogUtils.getRemovedClassErrorLog;
 
 import io.takari.maven.testing.executor.MavenRuntime;
@@ -43,8 +45,10 @@ public class ClassesApiCheckTestCase extends AbstractApiCheckTestCase {
         getConstructorNumberOfParametersChangedError(ORG_BAR_B, EMPTY_PARAMS, STRING);
     String[] cConstructorNumberOfParametersChangedError =
         getConstructorNumberOfParametersChangedError(ORG_FOO_A_C, EMPTY_PARAMS, STRING);
+    String[] cConstructorVisibilityIncreasedError =
+        getConstructorVisibilityIncreasedError(ORG_FOO_A_C, PROTECTED, PUBLIC, EMPTY_PARAMS, STRING);
     doBrokenApiTest("detectsApiChangesInExportedSuperClassInProtectedInnerClass", bConstructorNumberOfParametersChangedError,
-                    cConstructorNumberOfParametersChangedError);
+                    cConstructorNumberOfParametersChangedError, cConstructorVisibilityIncreasedError);
   }
 
   @Test
