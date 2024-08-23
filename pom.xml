@@ -86,7 +86,7 @@
         <revapi-java-spi.version>0.25.0</revapi-java-spi.version>
         <takari.test.version>3.0.2</takari.test.version>
         <junit.version>4.13.2</junit.version>
-        <hamcrest-core.version>2.2</hamcrest-core.version>
+        <hamcrest-core.version>3.0</hamcrest-core.version>
 
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
