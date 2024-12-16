@@ -34,20 +34,24 @@
                                                 "behavior" : "report"
                                             }
                                         },
-                                        "semver": {
-                                          "ignore": {
-                                            "enabled": true,
-                                            "versionIncreaseAllows" : {
-                                              "major" : "breaking",
-                                              "minor" : "nonBreaking",
-                                              "patch" : "equivalent"
+                                        "versions": {
+                                        "enabled": true,
+                                        "versionIncreaseAllows": {
+                                            "major": {
+                                                "severity": "BREAKING"
                                             },
-                                            "passThroughDifferences": ["java.class.nonPublicPartOfAPI"]
-                                          }
+                                            "minor": {
+                                                "severity": "NON_BREAKING"
+                                            },
+                                            "patch": {
+                                                "severity": "EQUIVALENT"
+                                            }
+                                        },
+                                        "passThroughDifference": ["java.class.nonPublicPartOfAPI"]
                                         }
                                     }
                                 }
-                            ]]></analysisConfiguration>
+                    ]]></analysisConfiguration>
                 </configuration>
                 <executions>
                     <execution>
