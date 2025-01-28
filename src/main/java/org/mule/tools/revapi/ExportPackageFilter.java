@@ -6,27 +6,22 @@
  */
 package org.mule.tools.revapi;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
+import static java.lang.String.format;
 
-import org.revapi.API;
+import java.io.Reader;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.revapi.AnalysisContext;
 import org.revapi.Archive;
 import org.revapi.Element;
 import org.revapi.ElementFilter;
-import org.revapi.java.model.TypeElement;
+import org.revapi.java.spi.JavaModelElement;
 import org.revapi.java.spi.JavaTypeElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,17 +30,16 @@ import org.slf4j.LoggerFactory;
  * Filters elements that are not part of a given Mule module API, so the API modification checks are not executed on them.
  * <p/>
  * This filter considers both standard and privileged APIs by merging them into a single API.
- *
+ * 
  * @since 1.0
  */
 public final class ExportPackageFilter implements ElementFilter {
 
-  private static final String EXPORTED_CLASS_PACKAGES_PROPERTY = "artifact.export.classPackages";
-  private static final String PRIVILEGED_EXPORTED_CLASS_PACKAGES_PROPERTY = "artifact.privileged.classPackages";
+  private static final ObjectMapper CONFIG_MAPPER =
+      new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   private static final Logger LOG = LoggerFactory.getLogger(ExportPackageFilter.class);
-
-  private Map<API, Set<String>> exportedPackages;
-  private Map<Element, Boolean> exportedElements = new HashMap();
+  private final Map<Archive, ApiBoundary> apiBoundaries = new HashMap<>();
+  private Configuration configuration;
 
   @Override
   public void close() {}
@@ -66,142 +60,165 @@ public final class ExportPackageFilter implements ElementFilter {
 
   @Override
   public void initialize(AnalysisContext analysisContext) {
-    exportedPackages = new HashMap<>();
-    Function<API, Set<String>> getExportedPackages = api -> {
-      Set<String> exportedPackages = new HashSet<>();
-      api.getArchives().forEach(a -> addExportedPackages(a, exportedPackages));
-      return exportedPackages;
+    initializeApiBoundaries(analysisContext);
+    configuration = readConfiguration(analysisContext);
+  }
 
-    };
-
-    exportedPackages.computeIfAbsent(analysisContext.getOldApi(), getExportedPackages);
-    exportedPackages.computeIfAbsent(analysisContext.getNewApi(), getExportedPackages);
+  /**
+   * This is done in order to validate only elements that are part of API archives and not, for example, Java JDK elements.
+   * 
+   * @param analysisContext This filter's {@link AnalysisContext}.
+   */
+  private void initializeApiBoundaries(AnalysisContext analysisContext) {
+    analysisContext.getOldApi().getArchives().forEach(archive -> apiBoundaries.put(archive, null));
+    analysisContext.getNewApi().getArchives().forEach(archive -> apiBoundaries.put(archive, null));
   }
 
   @Override
   public boolean applies(Element element) {
-    boolean exported;
-
-    if (element instanceof JavaTypeElement) {
-      exported = isExported(element);
-    } else {
-      TypeElement ownerJavaTypeElement = findOwnerJavaTypeElement(element);
-
-      exported = isExported(ownerJavaTypeElement);
-    }
-
-    if (isVerboseLogging()) {
-      LOG.info(exported + " : applies to " + element);
-    }
-
-    return exported;
+    return isApiElement(element);
   }
 
   @Override
   public boolean shouldDescendInto(Object element) {
-    boolean descendInto = element instanceof Element ? isExported((Element) element) : false;
-
+    boolean descendInto = element instanceof JavaTypeElement && isApiElement((JavaTypeElement) element);
     if (isVerboseLogging()) {
-      LOG.info(descendInto + ": should descend into " + element);
+      LOG.info("Filter {} descend into {}", descendInto ? "Will" : "Will NOT", element);
     }
-
     return descendInto;
   }
 
-  private TypeElement findOwnerJavaTypeElement(Element element) {
-    while (!(element instanceof JavaTypeElement) || element.getParent() instanceof TypeElement) {
-      element = element.getParent();
+  private Configuration readConfiguration(AnalysisContext analysisContext) {
+    try {
+      Configuration configuration =
+          CONFIG_MAPPER.treeToValue(analysisContext.getConfigurationNode(), Configuration.class);
+      return configuration == null ? new Configuration() : configuration;
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(format("Could not read the filter configuration for [%s].", this.getExtensionId()), e);
     }
-
-    if (!(element instanceof JavaTypeElement)) {
-      throw new IllegalStateException("Cannot find the parent type element for: " + element);
-    }
-
-    return (TypeElement) element;
   }
 
-  private boolean isExported(Element element) {
-    if (exportedElements.containsKey(element)) {
-      return exportedElements.get(element);
+  private ApiBoundary getApiBoundary(Element<?> element, Configuration configuration) {
+    ApiBoundary apiBoundary =
+        new CachedApiBoundary(configuration.getModuleSystemStrategy().getApiBoundary(element, configuration));
+    if (isVerboseLogging()) {
+      LOG.info(apiBoundary.toString());
     }
+    return apiBoundary;
+  }
 
-    boolean exported;
-    if (!(element instanceof TypeElement)) {
-      exported = false;
-    } else {
-      String packageName = getPackageName((TypeElement) element);
-      Set<String> exportDefinitions = exportedPackages.get(element.getApi());
-      if (exportDefinitions == null || exportDefinitions.isEmpty()) {
-        exported = false;
-      } else {
-        exported = exportDefinitions.contains(packageName);
-      }
+  /**
+   * Determines if an {@link Element} is part of the API.
+   * 
+   * @param element The element that must be checked.
+   * @return True if the element is part of the API.
+   */
+  private boolean isApiElement(Element<?> element) {
+    boolean isApi = false;
+    if (apiBoundaries.containsKey(element.getArchive())) {
+      isApi = apiBoundaries.computeIfAbsent(element.getArchive(), archive -> getApiBoundary(element, configuration))
+          .isApi(element);
     }
     if (isVerboseLogging()) {
-      LOG.info(exported + " : applies to " + element);
+      logIsApi(element, isApi);
     }
-    exportedElements.put(element, exported);
-    return exported;
+    return isApi;
   }
 
-  private String getPackageName(TypeElement element) {
-    String canonicalName = findOwnerJavaTypeElement(element).getCanonicalName();
-    int index = canonicalName.lastIndexOf(".");
-    return canonicalName.substring(0, index);
+  /**
+   * Logs whether an element is part of an API.
+   * 
+   * @param element The element.
+   * @param isApi   True if the element is part of the API.
+   */
+  private void logIsApi(Element<?> element, boolean isApi) {
+    LOG.info("{} is {}", element, isApi ? "part of the API" : "NOT part of the API");
   }
 
-  private byte[] getBytes(InputStream is)
-      throws IOException {
-    byte[] buffer = new byte[8192];
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream(2048);
-    int n;
-    while ((n = is.read(buffer, 0, buffer.length)) != -1) {
-      outputStream.write(buffer, 0, n);
+  /**
+   * Filter configuration POJO. Will be instantiated by parsing the filter configuration.
+   */
+  private static class Configuration {
+
+    private List<String> jpmsExcludedTargets = Collections.emptyList();
+    private ModuleSystemStrategy moduleSystemStrategy = ModuleSystemStrategy.MIXED;
+
+    public Configuration() {}
+
+    /**
+     * @return A List of regular expressions. Any jpms target module whose fully qualified name matches an expression defined here
+     *         will not be taken into account when defining the module API. This is useful to exclude directed exports to modules
+     *         that can tolerate breaking changes via refactor.
+     */
+    public List<String> getJpmsExcludedTargets() {
+      return jpmsExcludedTargets;
     }
-    return outputStream.toByteArray();
+
+    /**
+     * @return One of the following module system strategies:</br>
+     *         MIXED: Prioritizes JPMS but will try to switch to MMS if the JPMS module is an automatic one.</br>
+     *         JAVA: JPMS Only.</br>
+     *         MULE: MMS only.</br>
+     */
+    public ModuleSystemStrategy getModuleSystemStrategy() {
+      return moduleSystemStrategy;
+    }
+
+    public void setJpmsExcludedTargets(List<String> jpmsExcludedTargets) {
+      this.jpmsExcludedTargets = jpmsExcludedTargets;
+    }
+
+    public void setModuleSystemStrategy(String moduleSystemStrategy) {
+      this.moduleSystemStrategy = ModuleSystemStrategy.valueOf(moduleSystemStrategy);
+    }
   }
 
-  private void addExportedPackages(Archive archive, Set<String> exportedPackages) {
-    try (JarInputStream jarFile = new JarInputStream(archive.openStream())) {
-      JarEntry entry;
+  /**
+   * Enumeration of the possible module system strategies: MIXED: Prioritizes JPMS but will try to switch to MMS if the JPMS
+   * module is an automatic one.</br>
+   * JAVA: JPMS Only.</br>
+   * MULE: MMS only.</br>
+   * Strategies can create {@link ApiBoundary} instances via {@link #getApiBoundary(Element, Configuration)}.
+   */
+  private enum ModuleSystemStrategy {
 
-      while ((entry = jarFile.getNextJarEntry()) != null) {
-        String name = entry.getName();
+    MIXED() {
 
-        if (name.equals("META-INF/mule-module.properties")) {
-          Properties properties = new Properties();
-          byte bytes[] = getBytes(new BufferedInputStream(jarFile));
-          properties.load(new ByteArrayInputStream(bytes));
-
-          Set<String> standardPackages = getPackagesFromProperty(properties, EXPORTED_CLASS_PACKAGES_PROPERTY);
-          exportedPackages.addAll(standardPackages);
-          Set<String> privilegedPackages = getPackagesFromProperty(properties, PRIVILEGED_EXPORTED_CLASS_PACKAGES_PROPERTY);
-          exportedPackages.addAll(privilegedPackages);
-
-          if (isVerboseLogging()) {
-            LOG.info("Adding exported packages from: " + jarFile + "\nstandard: " + standardPackages + "\nprivileged: "
-                + privilegedPackages);
+      @Override
+      public ApiBoundary getApiBoundary(Element<?> element, Configuration configuration) {
+        JavaModuleSystemApiBoundary jpmsApiBoundary = (JavaModuleSystemApiBoundary) JAVA.getApiBoundary(element, configuration);
+        // Automatic modules must prioritize MuleModuleSystem descriptors when mode is MIXED.
+        if (jpmsApiBoundary.isAutomatic()) {
+          ApiBoundary muleModuleSystemApiBoundary = new MuleModuleSystemApiBoundary(element.getArchive());
+          if (!muleModuleSystemApiBoundary.isEmpty()) {
+            return muleModuleSystemApiBoundary;
           }
         }
+        return jpmsApiBoundary;
       }
-    } catch (IOException e) {
-      LOG.debug("Failed to open the archive " + archive + " as a jar.", e);
-    }
-  }
+    },
+    JAVA {
 
-  private Set<String> getPackagesFromProperty(Properties properties, String propertyName) {
-    Set<String> result = new HashSet<>();
-    String property = properties.getProperty(propertyName);
-    if (property != null) {
-      String[] packages = property.split(",");
-      for (String packageName : packages) {
-        String name = packageName.trim();
-        if (!"".equals(name)) {
-          result.add(name);
-        }
+      @Override
+      public JavaModuleSystemApiBoundary getApiBoundary(Element<?> element, Configuration configuration) {
+        return new JavaModuleSystemApiBoundary((JavaModelElement) element, configuration.getJpmsExcludedTargets());
       }
-    }
+    },
+    MULE {
 
-    return result;
+      @Override
+      public ApiBoundary getApiBoundary(Element<?> element, Configuration configuration) {
+        return new MuleModuleSystemApiBoundary(element.getArchive());
+      }
+    };
+
+    /**
+     * Creates an {@link ApiBoundary} instance.
+     * 
+     * @param element       Element that will be used to determine the boundary.
+     * @param configuration This filter configuration.
+     * @return ApiBoundary that corresponds to the provided element.
+     */
+    public abstract ApiBoundary getApiBoundary(Element<?> element, Configuration configuration);
   }
 }
