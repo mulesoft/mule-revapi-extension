@@ -79,7 +79,7 @@
 
     <properties>
         <apiAnnotationsVersion>1.8.4-rc1</apiAnnotationsVersion>
-        <muleBomVersion>4.9.4-SNAPSHOT</muleBomVersion>
+        <muleBomVersion>4.9.4-rc1</muleBomVersion>
 
         <revapi.skip>false</revapi.skip>
 
