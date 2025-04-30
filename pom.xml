@@ -16,7 +16,7 @@
     <version>1.9.5-SNAPSHOT</version>
 
     <name>Mule Revapi Extension</name>
-    <description>Provides support for accepting API boundaries defined by Mule modules.</description>
+    <description>Provides support for accepting API boundaries defined by Mule modules.This is a test.</description>
     <url>https://github.com/mulesoft/mule-revapi-extension</url>
 
     <organization>
