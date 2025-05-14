@@ -12,14 +12,22 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.revapi</groupId>
                 <artifactId>revapi-maven-plugin</artifactId>
-                <version>0.15.0</version>
+                <version>0.15.1-SNAPSHOT</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.mule.tools.maven</groupId>
                         <artifactId>mule-revapi-extension</artifactId>
-                        <version>${it-plugin.version}</version>
+                        <version>1.10.0-SNAPSHOT</version>
                     </dependency>
                 </dependencies>
                 <configuration>
@@ -34,20 +42,31 @@
                                                 "behavior" : "report"
                                             }
                                         },
-                                        "semver": {
-                                          "ignore": {
+                                        "versions": {
                                             "enabled": true,
-                                            "versionIncreaseAllows" : {
-                                              "major" : "breaking",
-                                              "minor" : "nonBreaking",
-                                              "patch" : "equivalent"
+                                            "versionIncreaseAllows": {
+                                                "major": {
+                                                    "severity": "BREAKING"
+                                                },
+                                                "minor": {
+                                                    "severity": "NON_BREAKING"
+                                                },
+                                                "patch": {
+                                                    "severity": "EQUIVALENT"
+                                                }
                                             },
-                                            "passThroughDifferences": ["java.class.nonPublicPartOfAPI"]
-                                          }
+                                            "passThroughDifference": ["java.class.nonPublicPartOfAPI"]
+                                        }
+                                    },
+                                    "mule": {
+                                        "module": {
+                                            "filter": {
+                                                "moduleSystemStrategy": "MULE"
+                                            }
                                         }
                                     }
                                 }
-                            ]]></analysisConfiguration>
+                    ]]></analysisConfiguration>
                 </configuration>
                 <executions>
                     <execution>
