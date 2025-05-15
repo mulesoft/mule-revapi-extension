@@ -1,4 +1,4 @@
 upstreamProjects:
-  Mule-runtime/api-annotations/1.5.17
+  Mule-runtime/api-annotations/1.5.18
 mavenSettingsXmlId: mule-runtime-maven-settings-MuleSettings
 projectType: runtime
